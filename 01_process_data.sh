@@ -39,7 +39,7 @@ do
  echo "Filtering $study"
  for chr in {1..22}
  do
-  gzip -d -c starting_data/"$study" | awk -v chr=$chr -v maf=$maf -v info=$info'{if  (NR == 1) print "SNP","A1","A2","OR","SE","P" ;  if (($1 == chr) && ($8 > info) &&  ($6 > maf) && ($7 > maf) &&  ($6 < 1-maf) && ($7 < 1-maf))  print $2,$4,$5,$9,$10,$11}' | grep -v NA > metal/"$study".metal_"$chr"
+  gzip -d -c starting_data/"$study" | awk -v chr=$chr -v maf=$maf -v info=$info'{if  (NR == 1) print "SNP","A1","A2","OR","SE","P" ;  if (($1 == chr) && ($8 > info) &&  ($6 > maf) && ($7 > maf) &&  ($6 < 1-maf) && ($7 < 1-maf))  print $2,$4,$5,$9,$10,$11}' | grep -v NA > metal/"$study"_"$chr"
  done
 done
 
@@ -51,7 +51,7 @@ do
  echo "Filtering $study"
  for chr in {1..22}
  do
-  gzip -d -c starting_data/"$study" | awk -v chr=$chr -v maf=$maf  '{if  (NR == 1) print "SNP","A1","A2","OR","SE","P" ;  if (($1 ==chr) && ($7 > maf) && ($7 < 1-maf))  print $2,$5,$6,exp($8),$9,$14}' > metal/"$study".metal_"$chr"
+  gzip -d -c starting_data/"$study" | awk -v chr=$chr -v maf=$maf  '{if  (NR == 1) print "SNP","A1","A2","OR","SE","P" ;  if (($1 ==chr) && ($7 > maf) && ($7 < 1-maf))  print $2,$5,$6,exp($8),$9,$14}' > metal/"$study"_"$chr"
  done
 done
 
