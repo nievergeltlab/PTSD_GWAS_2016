@@ -1,0 +1,19 @@
+#!/bin/bash
+#PBS -lmem=32gb
+#PBS -V
+
+while getopts m:p:z: option
+do
+  case "${option}"
+    in
+      m) metalin=${OPTARG};;
+      p) metalloc=${OPTARG};;
+      z) workingdir=${OPTARG};;
+    esac
+done
+
+#Sample syntax 
+#qsub -l walltime=1:00:00 runmetal_v1.qsub -F "-m /mnt/sdb/genetics/manhattan/metal_inputs/eurdata.mi -p /mnt/sdb/genetics/manhattan/metal/metal -z /mnt/sdb/genetics/manhattan/"
+
+cd $workingdir
+$metalloc $metalin
