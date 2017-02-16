@@ -21,7 +21,7 @@ mi_footer <- read.csv('meta_footer.mi',header=F)
 
 #Note I use AA2 and EA2 because sometimes I added two datasets at once, e.g. if one study has 2 components.
 
-#Feb 16 tbd: Loop over all chromosomes
+#Feb 16 tbd: add in the chromosome number using hte paste ocmmand
 
 ioutdat <- c()
 eaoutdat <- c()
@@ -32,7 +32,7 @@ for (chrom in c(1:22))
  {
  for (i in 1:dim(dat)[1]) #If just doing ALL data and not interested in intermediates, take the last line of the data only (the dimension)
  {
-  ioutdat  <- c(ioutdat, na.omit(unlist(dat[i,4:8]))) #Here 4:8 are the relevant columns. May have to change if adding new populations or working with reduced column set
+  ioutdat  <- c(ioutdat, paste(na.omit(unlist(dat[i,4:8])),chrom,sep="_")) #Here 4:8 are the relevant columns. May have to change if adding new populations or working with reduced column set
   iout <- paste("PROCESS", t(ioutdat))
   iout <- c(iout, paste('OUTFILE results/all_',i,'_',chrom, ' .tbl',sep='')) #Results file name
   ioutfilename <- paste('temporary_files/all',i,chrom,'.mi',sep='') #Metal script input file name
@@ -40,7 +40,7 @@ for (chrom in c(1:22))
 
   if(!is.na(dat[i,]$EA) | !is.na(dat[i,]$EA2))
   {
-    eaoutdat  <- c(eaoutdat, na.omit(unlist(dat[i,c("EA","EA2")])))
+    eaoutdat  <- c(eaoutdat, paste(na.omit(unlist(dat[i,c("EA","EA2")])),chrom,sep="_"))
     eaout <- paste("PROCESS", t(eaoutdat))
 
     eaout <- c(eaout, paste('OUTFILE results/eur_',i,'_',chrom,  ' .tbl',sep=''))
@@ -51,7 +51,7 @@ for (chrom in c(1:22))
 
   if(!is.na(dat[i,]$AA) | !is.na(dat[i,]$AA2))
   {
-    aaoutdat  <- c(aaoutdat, na.omit(unlist(dat[i,c("AA","AA2")])))
+    aaoutdat  <- c(aaoutdat, paste(na.omit(unlist(dat[i,c("AA","AA2")])),chrom,sep="_"))
     aaout <- paste("PROCESS", t(aaoutdat))
 
     aaout <- c(aaout, paste('OUTFILE results/aam_',i,'_',chrom,  ' .tbl',sep=''))
@@ -62,7 +62,7 @@ for (chrom in c(1:22))
 
   if(!is.na(dat[i,]$HNA))
   {
-    hnaoutdat  <- c(hnaoutdat, na.omit(unlist(dat[i,c("HNA")])))
+    hnaoutdat  <- c(hnaoutdat, paste(na.omit(unlist(dat[i,c("HNA")])),chrom,sep="_"))
     hnaout <- paste("PROCESS", t(hnaoutdat))
 
     hnaout <- c(hnaout, paste('OUTFILE results/lat_',i,'_',chrom,  ' .tbl',sep=''))
