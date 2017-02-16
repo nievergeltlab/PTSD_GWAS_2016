@@ -19,6 +19,8 @@ dat <- read.csv('study_order.csv',header=T,na.strings=c("NA","#N/A"),stringsAsFa
 
 #Note I use AA2 and EA2 because sometimes I added two datasets at once, e.g. if one study has 2 components.
 
+#Feb 16 tbd: Loop over all chromosomes
+
 ioutdat <- c()
 eaoutdat <- c()
 aaoutdat <- c()
@@ -28,11 +30,10 @@ for (i in 1:dim(dat)[1])
 {
  ioutdat  <- c(ioutdat, na.omit(unlist(dat[i,4:8])))
  iout <- paste("PROCESS", t(ioutdat))
- iout <- c(iout, paste('OUTFILE results/all_',i,'_', ' .tbl',sep=''))
-
- ioutfilename <- paste('temporary_files/all',i,'.mi',sep='')
+ iout <- c(iout, paste('OUTFILE results/all_',i,'_', ' .tbl',sep='')) #Results file name
+ ioutfilename <- paste('temporary_files/all',i,'.mi',sep='') #Metal script input file name
  write.table(iout, ioutfilename ,quote=F,row.names=F,col.names=F)
- system(paste('cat metal_inputs/meta_header.mi ', ioutfilename, ' metal_inputs/meta_footer.mi >', ioutfilename,'.mif',sep=""))
+ system(paste('cat meta_header.mi ', ioutfilename, ' meta_footer.mi >', ioutfilename,'.mif',sep="")) #Read header file
  
  if(!is.na(dat[i,]$EA) | !is.na(dat[i,]$EA2))
  {
@@ -43,7 +44,7 @@ for (i in 1:dim(dat)[1])
 
    eaoutfilename <- paste('temporary_files/eur',i,'.mi',sep='')
    write.table(eaout, eaoutfilename ,quote=F,row.names=F,col.names=F)
-   system(paste('cat metal_inputs/meta_header.mi ', eaoutfilename, ' metal_inputs/meta_footer.mi >', eaoutfilename,'.mif',sep=""))
+   system(paste('cat meta_header.mi ', eaoutfilename, ' meta_footer.mi >', eaoutfilename,'.mif',sep=""))
  }
 
  if(!is.na(dat[i,]$AA) | !is.na(dat[i,]$AA2))
@@ -55,7 +56,7 @@ for (i in 1:dim(dat)[1])
 
    aaoutfilename <- paste('temporary_files/aam',i,'.mi',sep='')
    write.table(aaout, aaoutfilename ,quote=F,row.names=F,col.names=F)
-   system(paste('cat metal_inputs/meta_header.mi ', aaoutfilename, ' metal_inputs/meta_footer.mi >', aaoutfilename,'.mif',sep=""))
+   system(paste('cat meta_header.mi ', aaoutfilename, ' meta_footer.mi >', aaoutfilename,'.mif',sep=""))
  }
 
  if(!is.na(dat[i,]$HNA))
