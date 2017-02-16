@@ -1,4 +1,7 @@
 #!/bin/bash
+#PBS -lmem=32gb
+#PBS -V
+
 while getopts m:s:l:d:o:c:p:d: option
 do
   case "${option}"
@@ -15,8 +18,7 @@ do
 done
 
 #Sample syntax
-#bash mh_plot_v3.sh -m mh_plot_v2.r -s ManhattanPlotterFunction_colorfixed_max10ylim2.R -l phase3.locations2 -d /mnt/sdb/genetics/manhattan/lisa_nov4/results/istss_v11.tbl -o istss_v11.tbl.jpg -z /mnt/sdb/genetics/manhattan/ -c blue -p 0.05
-
+#qsub -l walltime=1:00:00 mh_plot.qsub -F "-m mh_plot.r -s ManhattanPlotterFunction_colorfixed_max10ylim2.R -l phase3.locations2 -d /mnt/sdb/genetics/manhattan/lisa_nov4/results/istss_v11.tbl -o istss_v11.tbl.jpg -z /mnt/sdb/genetics/manhattan/ -c blue -p 0.05"
 
 cd $workingdir
 
