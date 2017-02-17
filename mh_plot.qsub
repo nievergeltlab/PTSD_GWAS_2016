@@ -2,35 +2,31 @@
 #PBS -lmem=32gb
 #PBS -V
 
-while getopts m:s:l:d:o:c:p:d: option
+while getopts m:s:l:d:c:p: option
 do
   case "${option}"
     in
       m) mhplotscript=${OPTARG};;
       s) graphicsscript=${OPTARG};;
       l) snplocations=${OPTARG};;
-      d) metaresults=${OPTARG};;
-      o) plotname=${OPTARG};;
+      d) metaresults_list=${OPTARG};;
       c) color=${OPTARG};;
       p) pvalinclude=${OPTARG};;   
-      z) workingdir=${OPTARG};;   
     esac
 done
 
-#Sample syntax
-#qsub -l walltime=1:00:00 mh_plot.qsub -F "-m mh_plot.r -s ManhattanPlotterFunction_colorfixed_max10ylim2.R -l phase3.locations2 -d /mnt/sdb/genetics/manhattan/lisa_nov4/results/istss_v11.tbl -o istss_v11.tbl.jpg -z /mnt/sdb/genetics/manhattan/ -c blue -p 0.05"
-
-cd $workingdir
+#Take the line of metal results
+metaresults=$(awk lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $metaresults_list )
 
 echo "Filtering data to columns 1 and 6 (metal defaults). Only take results with p < $pvalinclude"
- cut -f 1,6 $metaresults | awk -v pvalinclude=$pvalinclude '{if ($2 < pvalinclude) print}' | LC_ALL=C sort -k1,1b > "$metaresults".temp.txt
+ cut -f 1,6 results/$metaresults | awk -v pvalinclude=$pvalinclude '{if ($2 < pvalinclude) print}' | LC_ALL=C sort -k1,1b > "$metaresults".temp.txt
 
 echo "Joining to reference locations"
  LC_ALL=C join $snplocations "$metaresults".temp.txt > "$metaresults".temp2.txt
 
 echo "Starting Manhattan plotting script"
-Rscript $mhplotscript $graphicsscript "$metaresults".temp2.txt $plotname $color
+Rscript $mhplotscript $graphicsscript "$metaresults".temp2.txt plots/"$metaresults".jpg $color
 
 echo "Cleanup"
- #rm "$metaresults".temp.txt
- #rm "$metaresults".temp2.txt
+ rm "$metaresults".temp.txt
+ rm "$metaresults".temp2.txt
