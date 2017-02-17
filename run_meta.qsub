@@ -10,5 +10,6 @@ do
       p) metalloc=${OPTARG};;
     esac
 done
+metaluse=$(awk lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $metalin )
 
 $metalloc $metalin
