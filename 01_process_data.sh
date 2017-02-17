@@ -1,19 +1,29 @@
+#To the User: Set the working directory
+workingdir=/mnt/sdb/genetics/manhattan
+
+#To the user: Install metal, write the path to the binary here
+metalpath=/mnt/sdb/genetics/manhattan/metal
+
 #Make a folder for all studies to be included.
 mkdir starting_data
+
+#Make a folder of where filtered data will go
+mkdir metal_inputs
+
+mkdir results
+mkdir plots
 
 #To the User: Move all Ricopili results files into starting_data
 #To the User: Make a list of all studies of unrelateds called studylist.txt
 #To the User: Make a list of all studies of relateds called studylist_related.txt
 
-#Make a folder of where filtered data will go
-mkdir metal_inputs
-
 #From one of the datasets where all SNP positions are given, list them all SNP positions into a file
+#To the user: give a file name
 zcat starting_data/file_name_here.gz  | awk '{print  $2,$1,$3}' | LC_ALL=C sort -k1,1b > phase3.locations
 LC_ALL=C sort -k1,1b phase3.locations > phase3.locations2
 #Save these as an R object
 
-#Module load R
+#module load R
 R
  nr <- as.numeric(system(paste("wc -l phase3.locations | awk \'{print $1}\' "),intern=T))
  #get list of numeric column classes (reads file faster)
@@ -25,7 +35,7 @@ R
  snp_locations <- dat1
  
  save(snp_locations, file="phase3_snplocations_v2_oct31_2016.R")
- q("no")
+q("no")
  
 #Export METAL columns only, with MAF and info filters
 #Info filter : Filter to markers with info > 0.6. Power is approx 80% at info > 0.6, according to Zheng & Scheet 2011
@@ -62,6 +72,23 @@ done
  #1	1	MRS	daner_mrsc_eur_analysis_run2.gz 	daner_mrsc_aam_analysis_run2.gz	daner_mrsc_lat_analysis_run2.gz #N/A	#N/A
  #1	3	SAFR (Adding African diversity)	#N/A	daner_safr_oth_analysis_run2.gz #N/A	#N/A	daner_safr_afr_analysis_run3.gz
 
-#Now that the metal inputs have been made, we can run metal
+#Run metal
 
-#Now that metal has been run, we can make the sequence of manhattan plots
+#First list all .mi inputs, then write a loop sending them to metal 
+ls temporary_files  | grep mif > metal_jobs.txt
+njobs=$(wc -l metal_jobs.txt | awk '{print $1}')
+metal_jobs_v1_nov5.txt
+qsub -t1-$njobs -l walltime=1:00:00 runmeta.qsub -d $workingdir -F "-m metal_jobs.txt -p $metalpath"
+
+#Make the sequence of manhattan plots
+
+ls results | grep aam > metal_results_aam.txt
+ls results | grep all > metal_results_all.txt
+ls results | grep eur > metal_results_eur.txt
+ls results | grep lat > metal_results_lat.txt
+
+#List all metal results, this parameter goes to -d
+#For each race, run this command, set the color parameter
+#TBD: Feb 16: code in parameter to make job WAIT for previous job to finish
+qsub -t1-$njobs -l walltime=1:00:00 mh_plot.qsub -d $workingdir -F "-m mh_plot.R -s ManhattanPlotterFunction_colorfixed_max10ylim2.R -l phase3.locations2 -d metal_results_all.txt -c blue -p 0.05"
+
