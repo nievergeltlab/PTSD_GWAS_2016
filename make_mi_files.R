@@ -1,8 +1,7 @@
-
 #Read .csv file containing an ordered list of studies to be included in the meta analysis
-dat <- read.csv('study_order.csv',header=T,na.strings=c("NA","#N/A"),stringsAsFactors=F)
-mi_header <- read.csv('meta_header.mi',header=F)
-mi_footer <- read.csv('meta_footer.mi',header=F)
+dat <- read.csv('study_order_v2.csv',header=T,na.strings=c("NA","#N/A"),stringsAsFactors=F)
+mi_header <- read.csv('meta_header.mi',header=F,stringsAsFactors=F)$V1
+mi_footer <- read.csv('meta_footer.mi',header=F,stringsAsFactors=F)$V1
 
 #Example data head
 #Group	ORder	Study	EA	AA	HNA	EA2	AA2
@@ -29,13 +28,13 @@ aaoutdat <- c()
 hnaoutdat <- c()
 
 for (chrom in c(1:22))
- {
+{
  for (i in 1:dim(dat)[1]) #If just doing ALL data and not interested in intermediates, take the last line of the data only (the dimension)
  {
   ioutdat  <- c(ioutdat, paste(na.omit(unlist(dat[i,4:8])),chrom,sep="_")) #Here 4:8 are the relevant columns. May have to change if adding new populations or working with reduced column set
-  iout <- paste("PROCESS", t(ioutdat))
+  iout <- paste("PROCESS ", t(ioutdat))
   iout <- c(iout, paste('OUTFILE results/all_',i,'_',chrom, ' .tbl',sep='')) #Results file name
-  ioutfilename <- paste('temporary_files/all',i,chrom,'.mi',sep='') #Metal script input file name
+  ioutfilename <- paste('temporary_files/all_',i,'_',chrom,'.mi',sep='') #Metal script input file name
   write.table(c(mi_header,iout,mi_footer), ioutfilename ,quote=F,row.names=F,col.names=F)
 
   if(!is.na(dat[i,]$EA) | !is.na(dat[i,]$EA2))
@@ -45,7 +44,7 @@ for (chrom in c(1:22))
 
     eaout <- c(eaout, paste('OUTFILE results/eur_',i,'_',chrom,  ' .tbl',sep=''))
 
-    eaoutfilename <- paste('temporary_files/eur',i,chrom, '.mi',sep='')
+    eaoutfilename <- paste('temporary_files/eur_',i,'_',chrom, '.mi',sep='')
     write.table(c(mi_header,eaout,mi_footer), eaoutfilename ,quote=F,row.names=F,col.names=F)
   }
 
@@ -56,7 +55,7 @@ for (chrom in c(1:22))
 
     aaout <- c(aaout, paste('OUTFILE results/aam_',i,'_',chrom,  ' .tbl',sep=''))
 
-    aaoutfilename <- paste('temporary_files/aam',i,chrom, '.mi',sep='')
+    aaoutfilename <- paste('temporary_files/aam_',i,'_',chrom, '.mi',sep='')
     write.table(c(mi_header,aaout,mi_footer), aaoutfilename ,quote=F,row.names=F,col.names=F)
   }
 
@@ -67,10 +66,9 @@ for (chrom in c(1:22))
 
     hnaout <- c(hnaout, paste('OUTFILE results/lat_',i,'_',chrom,  ' .tbl',sep=''))
 
-    hnaoutfilename <- paste('temporary_files/lat',i,chrom, '.mi',sep='')
+    hnaoutfilename <- paste('temporary_files/lat_',i,'_',chrom, '.mi',sep='')
     write.table(c(mi_header,hnaout,mi_footer), hnaoutfilename ,quote=F,row.names=F,col.names=F)
   }
 
  }
 }
- 
