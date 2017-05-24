@@ -1,0 +1,35 @@
+#!/bin/bash
+#PBS -V
+
+while getopts l:d: option
+do
+  case "${option}"
+    in
+      l) snplocations=${OPTARG};;
+      d) lzresults_list=${OPTARG};;   
+    esac
+done
+
+#Load R
+module load R 
+#Take the line of metal results
+lzresults=$(awk -v lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $lzresults_list )
+
+echo "Filtering data to columns 1 and 6 (metal defaults)."
+ cut -f 1,6 results_cat/$lzresults | LC_ALL=C sort -k1,1b > "$lzresults".temp.txt
+
+echo "Joining to reference locations"
+ LC_ALL=C join $snplocations "$lzresults".temp.txt > "$lzresults".lz
+
+echo MarkerName P.value > lz.header
+
+#for each chromosome, make a file (will be parsable)
+for chr in {1..22}
+do
+ echo "printing results for $chr"
+ awk -v chr=$chr '{if ($2 == chr) print $1,$4}' "$lzresults".lz  > results_lz/"$lzresults"."$chr".lz
+done
+
+echo "Cleanup"
+ #rm "$lzresults".temp.txt
+ #rm "$lzresults".lz

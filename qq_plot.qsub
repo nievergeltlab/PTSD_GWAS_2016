@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -V
+
+while getopts q:e:p: option
+do
+  case "${option}"
+    in
+      q) qqplotscript=${OPTARG};;
+      e) errorbars=${OPTARG};;
+      p) pvals=${OPTARG};;   
+    esac
+done
+
+#Load R
+module load R 
+
+for i in $(cat $pvals)
+do
+
+ echo "QQ plotting script"
+ Rscript $qqplotscript results_cat/"$i" plots/"$i".qq $errorbars & 
+
+done
+
+wait
+

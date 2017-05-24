@@ -1,0 +1,20 @@
+#!/bin/bash
+#PBS -V
+
+while getopts m:p: option
+do
+  case "${option}"
+    in
+      m) metalin=${OPTARG};;
+      p) metalloc=${OPTARG};;
+    esac
+done
+
+
+#metaluse=$(awk -v lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $metalin )
+for filein in $(cat $metalin)
+do
+ $metalloc metal_scripts/"$filein" & 
+done
+wait
+

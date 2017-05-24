@@ -1,0 +1,58 @@
+#!/bin/bash
+#PBS -V
+
+while getopts f:s:o:m:i: option
+do
+  case "${option}"
+    in
+      f) listfile=${OPTARG};;
+      s) start_folder=${OPTARG};;
+      o) out_folder=${OPTARG};;
+      m) maf=${OPTARG};;
+      i) info=${OPTARG};;
+    esac
+done
+
+#Get the file from the list
+file=$(awk -v lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $listfile )
+
+
+#Make a temporary file folder for the GWAS results
+mkdir "$TMPDIR"/imputation
+
+echo "Copying data"
+date
+#Copy data from home to this folder
+cp "$start_folder"/"$file" "$TMPDIR"/imputation/.
+
+echo "unzipping data"
+date
+#Unzip the data
+gzip -d -c "$TMPDIR"/imputation/"$file" > "$TMPDIR"/imputation/"$file".unzip
+
+#Need to get the case/control counts in order to properly calculate maf
+ncases=$(awk 'NR==1{print $6}' "$TMPDIR"/imputation/"$file".unzip | sed 's/FRQ_A_//g' )
+ncontrols=$(awk 'NR==1{print $7}' "$TMPDIR"/imputation/"$file".unzip | sed 's/FRQ_U_//g' )
+ 
+echo $ncases cases and $ncontrols controls
+
+
+#Filter it down into chromosomal pieces and then zip them
+for chr in {1..22}
+do
+ echo "Doing chromosome $chr"
+ date
+ awk -v ncases=$ncases -v ncontrols=$ncontrols -v chr=$chr -v maf=$maf -v info=$info '{if  (NR == 1) print "SNP","FRQ_A","FRQ_U","INFO","ngt" ;  if (($1 == chr) && ($8 > info) &&  (($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) > maf) &&  (($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) < 1-maf) && ($11 != "NA"))  print $2,$6,$7,$8,$12}' "$TMPDIR"/imputation/"$file".unzip | gzip > "$TMPDIR"/imputation/"$file"_"$chr".gz &
+done
+ wait
+echo "Clean and copy"
+date
+#Remove the unzipped file and original file from the tmpdir
+rm -f "$TMPDIR"/imputation/"$file".unzip
+rm -f "$TMPDIR"/imputation/"$file"
+
+#Copy the data from the tmp dir to the output
+cp "$TMPDIR"/imputation/"$file"_* "$out_folder"/.
+
+echo "Done!"
+date

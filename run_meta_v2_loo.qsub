@@ -1,0 +1,24 @@
+#!/bin/bash
+#PBS -V
+
+while getopts m:p:n: option
+do
+  case "${option}"
+    in
+      m) metalin=${OPTARG};;
+      p) metalloc=${OPTARG};;
+      n) nodeuse=${OPTARG};;
+    esac
+done
+
+jstart=$((($PBS_ARRAYID-1)*$nodeuse +1))
+jstop=$(($PBS_ARRAYID*$nodeuse))
+
+awk -v jstart=$jstart -v jstop=$jstop '{if (NR >= jstart && NR <= jstop) print }' $metalin > errandout/metal_job_"$PBS_ARRAYID"
+
+for filein in $(cat errandout/metal_job_"$PBS_ARRAYID")
+do
+ $metalloc metal_scripts/"$filein" & 
+done
+wait
+

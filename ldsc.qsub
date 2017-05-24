@@ -1,0 +1,41 @@
+#!/bin/bash
+#PBS -V
+
+while getopts m:p: option
+do
+  case "${option}"
+    in
+      m) resultsin=${OPTARG};;
+      p) resultsloc=${OPTARG};;
+    esac
+done
+
+module load ldsc
+
+resultsuse=$(awk -v lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $resultsin )
+
+mkdir $TMPDIR/"metad"
+
+grep -v ?? results_cat/"$resultsuse" | awk '{if(NR==1) print "SNP","A1","A2","BETA","SE","P", "N_case","N_Control"; else print $1,$2,$3,$4,$5,$6,"6000","23000"}'   > $TMPDIR/"metad"/"$resultsuse"_formunge
+#4000/8000 females
+#
+
+munge_sumstats.py --sumstats $TMPDIR/"metad"/"$resultsuse"_formunge --out $TMPDIR/"metad"/"$resultsuse"
+
+
+ldsc.py \
+--h2 $TMPDIR/"metad"/"$resultsuse".sumstats.gz \
+--ref-ld-chr /home/cnieverg/report_data/testrun/results_cat/eur_w_ld_chr/ \
+--w-ld-chr /home/cnieverg/report_data/testrun/results_cat/eur_w_ld_chr/ \
+--samp-prev 0.206 \
+--pop-prev 0.05 \
+--out results_cat/"$resultsuse"_h2
+
+done
+
+
+#.3333 and .11 for fem
+#.206 and .05 for m
+
+
+

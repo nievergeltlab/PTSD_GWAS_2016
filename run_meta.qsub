@@ -1,5 +1,4 @@
 #!/bin/bash
-#PBS -lmem=32gb
 #PBS -V
 
 while getopts m:p: option
@@ -10,6 +9,8 @@ do
       p) metalloc=${OPTARG};;
     esac
 done
-metaluse=$(awk lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $metalin )
+metaluse=$(awk -v lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $metalin )
 
-$metalloc $metalin
+$metalloc metal_scripts/"$metaluse"
+
+

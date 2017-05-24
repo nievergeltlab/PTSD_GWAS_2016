@@ -1,0 +1,29 @@
+#!/bin/bash
+#PBS -V
+
+while getopts l:d: option
+do
+  case "${option}"
+    in
+
+      l) snplocations=${OPTARG};;
+      d) metaresults_list=${OPTARG};;
+ 
+    esac
+done
+#Load R
+module load R 
+#Take the line of metal results
+metaresults=$(awk -v lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $metaresults_list )
+cp $snplocations  "$TMPDIR"/"$snplocations"
+cp results_cat/"$metaresults"  $TMPDIR/"$metaresults".temp.txt 
+
+ LC_ALL=C sort -k1,1b  <(awk '{print $1,$2,$3,$4,exp($4),$5,$6}' $TMPDIR/"$metaresults".temp.txt)  > $TMPDIR/"$metaresults".temp.txt2 
+
+echo "Joining to reference locations"
+
+echo "SNP CHR BP A1 A2 BETA OR SE P" > "$TMPDIR"/locations.header
+
+
+ LC_ALL=C join "$TMPDIR"/"$snplocations" $TMPDIR/"$metaresults".temp.txt2  | cat "$TMPDIR"/locations.header - |  gzip > "$metaresults".locations.gz
+
