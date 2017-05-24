@@ -349,7 +349,7 @@ forestsnpchr=13
 
 
 #Get genotype data for forest plot SNPS
-for fp in $(tail -n1 fucker.csv)
+for fp in $(tail -n1 fudger.csv)
 do
  forestsnp=$(echo $fp | awk 'BEGIN {FS=","}{print $2}')
  forestsnpchr=$(echo $fp | awk 'BEGIN {FS=","}{print $1}') 
@@ -359,7 +359,7 @@ do
 done
 
 #Plot forest plots
-for fp in $(cat fucker.csv | awk 'NR==5{print}')
+for fp in $(cat fudger.csv | awk 'NR==5{print}')
 do
  forestsnp=$(echo $fp | awk 'BEGIN {FS=","}{print $2}')
  ancgroup=$(echo $fp | awk 'BEGIN {FS=","}{print $3}') 
