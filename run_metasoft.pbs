@@ -1,0 +1,73 @@
+#!/bin/bash
+#PBS -V
+
+while getopts r:b:g: option
+do
+  case "${option}"
+    in
+      r) race=${OPTARG};;
+      b) bem=${OPTARG};;
+      g) gender=${OPTARG};;
+    esac
+done
+
+#Load R
+ module load R 
+
+#Set chromosome to array id
+ chr=$PBS_ARRAYID
+
+if [ $bem == "bem" ]
+then
+ echo "Doing additional binary effects model (Takes longer)"
+ metaflag="-binary_effects"
+ append="_bem"
+fi
+
+#Deal with gender coding
+ if [ $gender ==  "mf" ]
+ then
+  sex=""
+ fi
+ 
+ if [ $gender !=  "mf" ]
+ then
+  sex=$gender
+ fi
+ 
+ #Run metasoft
+ 
+ #Special trans-ethnic handling
+ if [ $race == "trans" ]
+ then
+  for msoft_files in $(ls metasoft_input_trans | grep .msoftdat.meta )
+  do 
+  java -jar Metasoft.jar -input metasoft_input_trans/"$msoft_files" -output metasoft_results/"$msoft_files".msoftout"$append" $metaflag  -log   metasoft_results/"$msoft_files".log"$append"  &
+  done
+  wait
+ else  
+  
+  jobcount=0 #Count running jobs, so you don't go above N cores
+  
+  #for chr in {1..22}
+  #do
+   #List metasoft files
+   n_msoft_files=$(ls metasoft_inputs/"$sex"/"$race"_chr"$chr"_p*.msoftdat.meta | wc -l)
+   
+   for chunk in $(seq -w 1 1 $n_msoft_files)
+   do
+    java -jar Metasoft.jar -input metasoft_inputs/"$sex"/"$race"_chr"$chr"_p"$chunk".msoftdat.meta -output metasoft_results/"$sex"/"$race"_chr"$chr"_p"$chunk".msoftout"$append" $metaflag  -log   metasoft_results/"$sex"/"$race"_chr"$chr"_p"$chunk".log"$append"  &
+    jobcount=$((jobcount+1))
+    
+    #Lazy job count incrementor. SEt jobcount higher to use more CPUs
+    if [ $jobcount==16 ]
+    then
+     wait
+     jobcount=0
+    fi
+    
+   done
+ fi
+ #done
+ wait
+ 

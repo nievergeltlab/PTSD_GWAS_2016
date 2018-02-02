@@ -1,0 +1,24 @@
+ 
+  cp phase3.locations2 "$TMPDIR"/.
+  cd $TMPDIR
+  
+#jobcount=0 #Count running jobs, so you don't go above N cores
+
+  chr=$PBS_ARRAYID
+
+#Split every file into n=16 parts
+
+ awk -v chr=$chr '{if($2 == chr) print $1}' phase3.locations2 | LC_ALL=C sort -k1b,1 > phase3.locations_chr$chr 
+ linecount=$(wc -l phase3.locations_chr$chr | awk '{print $1}')
+ linecount2=$(((linecount + 1) /16 + 1))
+ 
+ split  -l $linecount2 -d phase3.locations_chr$chr phase3.locations_chr"$chr"_p  --numeric-suffixes=1
+ 
+ echo "SNP" > snp.txt
+ for file in $(ls *_p*)
+ do
+  cat snp.txt $file | LC_ALL=C sort -k1b,1 > /home/cnieverg/report_data/testrun/phase3_locations/$file
+ done
+ 
+
+  

@@ -18,7 +18,7 @@ GCfactor= round(median(qchisq(data[,1],1,lower.tail=F),na.rm=T)/.455,3)
 png(paste(outfilename,'.png', sep=''))
 par(bty='l')
 
-plot(c(0,max(QQ)), c(0,max(UNADJ)), xlab='Expected -log10(p)', ylab='Observed -log10(p)', col='blue', cex=1.3, cex.axis=1.2, cex.lab=1.5,pch=20)
+plot(c(0,max(QQ)), c(0,max(UNADJ)), xlab='Expected -log10(p)', ylab='Observed -log10(p)', col='white', cex=1.3, cex.axis=1.2, cex.lab=1.5,pch=20)
 
 if(errorbars == 1)
 {

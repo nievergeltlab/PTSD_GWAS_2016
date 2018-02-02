@@ -1,0 +1,133 @@
+#!/bin/bash
+#PBS -V
+
+while getopts r:f:i:g: option
+do
+  case "${option}"
+    in
+      r) race=${OPTARG};;
+      f) freq=${OPTARG};;
+      i) info=${OPTARG};;
+      g) gender=${OPTARG};;
+    esac
+done
+
+#Set chromosome to array id
+ chr=$PBS_ARRAYID
+ 
+#Set job incrementor variable
+ jobcount=0
+
+#Number of chunks for chromosome is just the number of chunk files
+ nchunks=$(ls phase3_locations/phase3.locations_chr"$chr"_* | wc -l)
+ echo "Doing $nchunks"
+#Load R
+ module load R 
+
+#Copy location files to temporary folder
+ cp phase3_locations/phase3.locations_chr"$chr"_p* "$TMPDIR"/.
+ 
+#Go to where input files are
+ cd metal_inputs
+
+#Deal with gender coding
+ if [ $gender ==  "mf" ]
+ then
+  sex=""
+ fi
+ 
+ if [ $gender !=  "mf" ]
+ then
+  sex=$gender
+ fi
+ 
+ 
+#Copy every dataset from the listing file into to the tmpdir
+ for dataset in $(cat /home/cnieverg/report_data/testrun/metasoft_scripts/"$sex"/metasoft_"$race"_chr"$chr".msoftin )
+ do
+  cp /home/cnieverg/report_data/testrun/metal_inputs/"$sex"/$dataset "$TMPDIR"/.
+ done
+ 
+#Selected chromosome pulled out for each dataset
+
+ for dataset in $(cat /home/cnieverg/report_data/testrun/metasoft_scripts/"$sex"/metasoft_"$race"_chr"$chr".msoftin )
+ do
+  #Sort each dataset
+  awk -v maf=$maf -v info=$info '{if(NR == 1 || ($4 >= maf && $4 <= (1- maf) && $5 >= info )) print $1,$2,$3,$9,$10,$11}' "$TMPDIR"/"$dataset" | LC_ALL=C sort -k1b,1  > "$TMPDIR"/"$dataset".sorted
+  
+  jobcount=$((jobcount+1))
+  if [ $jobcount==16 ]
+  then
+   wait
+   jobcount=0
+  fi
+ done
+ wait
+ 
+ #Reset job counter
+ 
+ jobcount=0
+#Join each dataset to locus file
+ for dataset in $(cat /home/cnieverg/report_data/testrun/metasoft_scripts/"$sex"/metasoft_"$race"_chr"$chr".msoftin )
+ do
+
+  for chunknum in $(seq -w 1 1 $nchunks)
+  do
+   echo "Joining $chunknum for $dataset"
+   LC_ALL=C join "$TMPDIR"/phase3.locations_chr"$chr"_p"$chunknum" "$TMPDIR"/"$dataset".sorted > "$TMPDIR"/"$dataset"_p"$chunknum" &
+   
+   jobcount=$((jobcount+1))
+   if [ $jobcount==16 ]
+   then
+    wait
+    jobcount=0
+   fi
+  done
+ done
+ wait
+ 
+ 
+
+
+  
+
+#Once each dataset is broken down into pieces, make one big metasoft file 
+#The problem was each CHUNK wasn't being done, it was once copy of the file for each chunk!!
+
+ cd "$TMPDIR"
+
+ for chunknum in $(seq -w 1 1 $nchunks)
+ do
+  echo "Now making $chunknum into metasoft" 
+  date
+  ms_input2=$(cat /home/cnieverg/report_data/testrun/metasoft_scripts/"$sex"/metasoft_"$race"_chr"$chr".msoftin | tr -d '\n' | sed "s/ /_p$chunknum /g")
+  python /home/cnieverg/report_data/testrun/plink2metasoft_adam.py_v2 "$race"_chr"$chr"_p"$chunknum".msoftdat $ms_input2 &
+  
+ 
+  jobcount=$((jobcount+1))
+  if [ $jobcount==16 ]
+  then
+   wait
+   jobcount=0
+  fi
+ done
+ wait
+ 
+#Get rid of junk lines and move data to output dir
+#-inf estimates will be removed!
+ for chunknum in $(seq -w  1 1 $nchunks)
+ do
+  echo "Last filtering on chunk $chunknum at this time:"
+  date
+  sed 's/-Inf/NA/g'  "$race"_chr"$chr"_p"$chunknum".msoftdat.meta |  sed 's/Inf/NA/g'   > /home/cnieverg/report_data/testrun/metasoft_inputs/"$sex"/"$race"_chr"$chr"_p"$chunknum".msoftdat.meta &
+  jobcount=$((jobcount+1))
+  if [ $jobcount==16 ]
+  then
+   #wait #Remove the wait thing
+   jobcount=0
+  fi
+ done
+ wait
+ 
+
+

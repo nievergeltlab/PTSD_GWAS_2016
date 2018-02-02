@@ -1,0 +1,43 @@
+#!/bin/bash
+#PBS -V
+
+while getopts m:p: option
+do
+  case "${option}"
+    in
+      m) resultsin=${OPTARG};;
+      p) resultsloc=${OPTARG};;
+    esac
+done
+
+module load ldsc
+
+resultsuse=$(awk -v lineno=$PBS_ARRAYID '{if (NR == lineno) print }' $resultsin )
+
+mkdir $TMPDIR/"metad"
+cases=$(zcat  starting_data/males_and_females/"$resultsuse" | head -n1 | awk '{print $6}' | sed 's/FRQ_A_//g')
+controls=$(zcat  starting_data/males_and_females/"$resultsuse" | head -n1 | awk '{print $7}' | sed 's/FRQ_U_//g')
+prevalence=$(echo $cases / $(($cases + $controls)) | bc -l)
+
+echo $cases $controls $prevalence
+
+
+zcat starting_data/males_and_females/"$resultsuse"   | awk -v maf=0.01 -v ncases=$cases -v ncontrols=$controls -v info=0.6 '{if(NR==1) print "SNP","A1","A2","OR","SE","P", "N_case","N_Control"; else if (($8 > info) &&  (($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) > maf) &&  (($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) < 1-maf) && ($11 != "NA")) print $2,$4,$5,$9,$10,$11,ncases,ncontrols}'   > $TMPDIR/"metad"/"$resultsuse"_formunge
+
+
+munge_sumstats.py --sumstats $TMPDIR/"metad"/"$resultsuse"_formunge --out $TMPDIR/"metad"/"$resultsuse"
+
+
+ldsc.py \
+--h2 $TMPDIR/"metad"/"$resultsuse".sumstats.gz \
+--ref-ld-chr /home/cnieverg/report_data/testrun/results_cat/eur_w_ld_chr/ \
+--w-ld-chr /home/cnieverg/report_data/testrun/results_cat/eur_w_ld_chr/ \
+--samp-prev $prevalence \
+--pop-prev 0.09 \
+--no-intercept \
+--out results_cat/"$resultsuse"_h2
+
+
+
+
+

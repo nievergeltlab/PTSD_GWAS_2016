@@ -23,7 +23,7 @@ mkdir "$TMPDIR"/imputation
 echo "Copying data"
 date
 #Copy data from home to this folder
-cp "$start_folder"/"$file" "$TMPDIR"/imputation/.
+cp "$start_folder"/starting_data/"$file" "$TMPDIR"/imputation/.
 
 echo "unzipping data"
 date
@@ -33,7 +33,11 @@ gzip -d -c "$TMPDIR"/imputation/"$file" > "$TMPDIR"/imputation/"$file".unzip
 #Need to get the case/control counts in order to properly calculate maf
 ncases=$(awk 'NR==1{print $6}' "$TMPDIR"/imputation/"$file".unzip | sed 's/FRQ_A_//g' )
 ncontrols=$(awk 'NR==1{print $7}' "$TMPDIR"/imputation/"$file".unzip | sed 's/FRQ_U_//g' )
- 
+#neff= #Neff = 2/(1/Ncases + 1/Ncontrols) Quality control and conduct of genome-wide association meta-analyses
+
+#NOte : headers must match this:
+#CHR         SNP          BP  A1  A2   FRQ_A_18   FRQ_U_206    INFO      OR      SE       P   ngt
+
 echo $ncases cases and $ncontrols controls
 
 
@@ -42,9 +46,12 @@ for chr in {1..22}
 do
  echo "Doing chromosome $chr"
  date
- awk -v ncases=$ncases -v ncontrols=$ncontrols -v chr=$chr -v maf=$maf -v info=$info '{if  (NR == 1) print "SNP","A1","A2","OR","SE","P" ;  if (($1 == chr) && ($8 > info) &&  (($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) > maf) &&  (($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) < 1-maf) && ($11 != "NA"))  print $2,$4,$5,$9,$10,$11}' "$TMPDIR"/imputation/"$file".unzip  > "$TMPDIR"/imputation/"$file"_"$chr" &
+ awk -v ncases=$ncases -v ncontrols=$ncontrols -v chr=$chr -v maf=$maf -v info=$info '{if  (NR == 1) print "SNP","A1","A2","MAF","Info","Ncases","Ncontrols","Neff","OR","SE","P" ; else  if (($1 == chr) && ($8 > info) &&  (($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) > maf) &&  (($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) < 1-maf) && ($11 != "NA"))  print $2,$4,$5,($6 * ncases + $7 * ncontrols) / (ncases + ncontrols) , $8,ncases,ncontrols,(4/(1/ncases + 1/ncontrols)), $9,$10,$11}' "$TMPDIR"/imputation/"$file".unzip  > "$TMPDIR"/imputation/"$file"_"$chr" &
+ 
 done
  wait
+ echo "Sample header"
+ head "$TMPDIR"/imputation/"$file"_"$chr" 
 echo "Clean and copy"
 date
 #Remove the unzipped file and original file from the tmpdir

@@ -14,11 +14,14 @@ done
 #Load R
 module load R 
 
+
 for i in $(cat $pvals)
 do
-
+ cp results_cat/"$i"* "$TMPDIR"/. 
+ 
+ gzip -d "$TMPDIR"/*.gz #Will unzip file in tmpdir, if zipped
  echo "QQ plotting script"
- Rscript $qqplotscript results_cat/"$i" plots/"$i".qq $errorbars & 
+ /sara/sw/R-3.2.1/bin/Rscript $qqplotscript "$TMPDIR"/"$i" plots/"$i".qq $errorbars & 
 
 done
 

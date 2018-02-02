@@ -1,0 +1,52 @@
+#!/bin/bash
+#PBS -V
+
+while getopts m:s:l:d:c:p:n: option
+do
+  case "${option}"
+    in
+      m) mhplotscript=${OPTARG};;
+      s) graphicsscript=${OPTARG};;
+      l) snplocations=${OPTARG};;
+      d) metaresults_list=${OPTARG};;
+      c) color=${OPTARG};;
+      p) pvalinclude=${OPTARG};;   
+      n) pcolnum=${OPTARG};;
+    esac
+done
+
+cp $snplocations "$TMPDIR"/"$snplocations"
+
+#Load R
+module load R 
+#Take the line of metal results
+
+jstart=$((($PBS_ARRAYID-1)*16 +1))
+jstop=$(($PBS_ARRAYID*16))
+
+
+awk -v jstart=$jstart -v jstop=$jstop '{if (NR >= jstart && NR <= jstop) print }' $metaresults_list > errandout/mh_job_"$PBS_ARRAYID"
+
+
+for filein in $(cat errandout/mh_job_"$PBS_ARRAYID")
+do
+
+cp results_cat/"$filein"  "$TMPDIR"/.
+
+echo "Filtering data to columns: SNP name column #1 and position  $pcolnum  . Assuming space delimiter. Only take results with p < $pvalinclude"
+
+zcat "$TMPDIR"/"$filein" | awk -v pvalinclude=$pvalinclude -v pcolnum=$pcolnum '{if ($pcolnum < pvalinclude) print $1,$pcolnum}'  | LC_ALL=C sort -k1,1b > "$TMPDIR"/"$filein".temp.txt
+
+echo "data has this many lines:"
+wc -l  "$TMPDIR"/"$filein".temp.txt
+
+echo "Joining to reference locations"
+ LC_ALL=C join $snplocations "$TMPDIR"/"$filein".temp.txt > "$TMPDIR"/"$filein".temp2.txt
+
+echo "Joined data has this many lines:" 
+wc -l "$TMPDIR"/"$filein".temp2.txt
+echo "Starting Manhattan plotting script"
+/sara/sw/R-3.2.1/bin/Rscript $mhplotscript $graphicsscript "$TMPDIR"/"$filein".temp2.txt plots/"$filein".jpg $color &
+
+done
+wait

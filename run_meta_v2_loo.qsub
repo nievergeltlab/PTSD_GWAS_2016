@@ -18,7 +18,7 @@ awk -v jstart=$jstart -v jstop=$jstop '{if (NR >= jstart && NR <= jstop) print }
 
 for filein in $(cat errandout/metal_job_"$PBS_ARRAYID")
 do
- $metalloc metal_scripts/"$filein" & 
+ $metalloc "$filein" & 
 done
 wait
 
